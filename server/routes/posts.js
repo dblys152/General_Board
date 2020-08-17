@@ -74,7 +74,7 @@ router.get('/postList', function(req, res){
 			  , "listCnt": 10
 			  , "pageCnt": parseInt(result.length / 10) + 1
 			};
-			return res.render('../view/board.ejs', {"postList": result, "cp": cp, "bbsNo": bbsNo, "qs": qs, "pageForm":pageForm});	
+			return res.render('../view/boardList.ejs', {"postList": result, "cp": cp, "bbsNo": bbsNo, "qs": qs, "pageForm":pageForm});	
 		}
 	});
 });
