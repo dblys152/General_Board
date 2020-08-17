@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8; pageEncoding=UTF-8">
+	<title>퇴근하겠습니다</title>
+	<script src="/script/jquery-1.12.4.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="/css/board_style.css">
+</head>
+<body>
+<div id="wrap">
+	<div id="header" include-html="nav_top.ejs">
+		<div class="logo_wrap">
+			<a href="/postList" class="logo"><img src="/img/퇴근하겠습니다_main.png" alt="퇴근"></a>
+		</div>
+		<ul class="nav_top">
+		<li class="free_board <% if(bbsNo == 4000) { %>on<%} %> ">
+			<a href="/postList?bbsNo=4000"><span class="txt">자유게시판</span></a>
+		</li>
+		<li class="free_board <% if(bbsNo == 4001) { %>on<%} %> ">
+			<a href="/postList?bbsNo=4001"><span class="txt">유머게시판</span></a>
+		</li>
+		<li class="free_board <% if(bbsNo == 4002) { %>on<%} %> ">
+			<a href="/postList?bbsNo=4002"><span class="txt">드라마게시판</span></a>
+		</li>
+		<li class="free_board <% if(bbsNo == 4003) { %>on<%} %> ">
+			<a href="/postList?bbsNo=4003"><span class="txt">영화게시판</span></a>
+		</li>
+		<li class="free_board <% if(bbsNo == 4004) { %>on<%} %> ">
+			<a href="/postList?bbsNo=4004"><span class="txt">만화게시판</span></a>
+		</li>
+		<li class="free_board <% if(bbsNo == 4005) { %>on<%} %> ">
+			<a href="/postList?bbsNo=4005"><span class="txt">게임게시판</span></a>
+		</li>
+		</ul>
+
+		<!-- 로그인 버튼 -->
+		<% if(loginNo){ %>
+			<a href="/users/logout" class="logo"><img src="/img/exit.png" alt="로그아웃" style="margin:15px 100px;height:50px;width:50px;"></a>
+		<% } else{ %>
+			<a href="/users" class="logo"><img src="/img/login.png" alt="로그인" style="margin:15px 100px;height:50px;width:50px;"></a>
+		<% } %>
+		<!-- /로그인 버튼 -->
+		
+	</div>
+	<!-- container -->
+	<div id="container">
+		<div id="aside">
+			<div class="nav_box">
+				<p class="tit col_blue bold">주간 인기 글</p>
+				<ul class="nav_list">
+				<li><a href="#">1. 내일 뭐먹지?</a></li>
+				<li><a href="#">2. 삼시세끼</a></li>
+				<li><a href="#">3. 아이슬란드 간 세끼</a></li>
+				<li><a href="#">4. 워크맨</a></li>
+				<li><a href="#">5. 신서유기5</a></li>
+				<li><a href="#">6. 아는형님</a></li>
+				<li><a href="#">7. 꽃보다청춘</a></li>
+				</ul>
+			</div>
+			<div class="nav_box">
+				<p class="tit col_red bold">주간 인기 주제</p>
+				<ul class="nav_list">
+				<li><a href="#">1. 드라마</a></li>
+				<li><a href="#">2. 자유</a></li>
+				<li><a href="#">3. 유머</a></li>
+				<li><a href="#">4. 게임</a></li>
+				<li><a href="#">5. 영화</a></li>
+				<li><a href="#">6. 만화</a></li>
+				</ul>
+			</div>
+			<div class="nav_box_copy">
+				<p class="tit">대충 광고가 있다는 영역</p>
+			</div>
+		</div>
+		<!-- content -->
+		<div class="main">
+			<%- body %>
+		</div>
+		<!-- //content -->
+	</div>
+	<!-- //container -->
+</div>
+<script>
+$(document).ready(function(){
+	
+});
+</script>
+</body>
+</html>

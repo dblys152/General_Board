@@ -1,0 +1,152 @@
+<% layout('home') -%>
+<div class="content">
+	<!-- section -->
+	<div class="section">
+		<!-- body -->
+		<div class="body">
+			<div class="field_box">
+				<form id="searchForm" action="postList" method="GET">
+					<input type="hidden" name="cp" value="<%= cp %>">
+					<input type="hidden" name="bbsNo" value="<%= bbsNo %>">
+					<div class="field_right">
+						<input type="text" name="qs" placeholder="검색어를 입력하세요." style="width:300px" value="<%= qs %>">
+						<a href="#" class="list_search"><img src="img/search.png" alt="검색"></a>
+						<a href="postWrite?bbsNo=<%= bbsNo %>"><img src="img/write.png" alt="쓰기"></a>
+					</div>
+				</form>
+			</div>
+			<!-- tbl_wrap -->
+			<div class="tbl_wrap list">
+				<table id="listBox">
+				<colgroup>
+					<col style="width:35px"><col style="width:300px"><col style="width:80px"><col style="width:80px"><col style="width:50px">
+					<col style="width:35px">
+				</colgroup>
+				<thead>
+				<tr class="cent">
+					<th scope="col"><div class="td_inr">No</div></th>
+					<th scope="col"><div class="td_inr">제목</div></th>
+					<th scope="col"><div class="td_inr">작성자</div></th>
+					<th scope="col"><div class="td_inr">작성일</div></th>
+					<th scope="col"><div class="td_inr">조회수</div></th>
+					<th scope="col"><div class="td_inr">추천수</div></th>
+				</tr>
+				</thead>
+				<tbody>
+				<% postList.forEach(function(item, i){ %>
+					<tr class="pointer">
+						<td>
+							<div class="td_inr cent">
+								<%= item.POST_NO %>
+								<input type="hidden" name="postNo" value="<%= item.POST_NO %>">
+								<input type="hidden" name="bbsNo" value="<%= item.BBS_NO %>">
+							</div>
+						</td>
+						<% if(item.REPLY_YN == 'Y') { %>
+						<td><div class="td_inr"><%= item.POST_TITLE %><span class="col_blue"> [<%= item.REPLY_CNT %>]</span></div></td>
+						<% } else { %>
+						<td><div class="td_inr"><%= item.POST_TITLE %></div></td>
+						<% } %>
+						<td><div class="td_inr cent"><%= item.WRT_NM %></div></td>
+						<td><div class="td_inr cent"><%= item.WRT_DTT %></div></td>
+						<td><div class="td_inr cent"><%= item.VIEW_CNT %></div></td>
+						<td><div class="td_inr cent"><%= item.LIKE_CNT %></div></td>
+					</tr>
+				<% }) %>
+				<% if(postList.length == 0){ %>
+					<tr>
+						<td colspan="6"><div class="td_inr cent">등록된 게시글이 없습니다.</div></td>
+					</tr>
+				<% } %>
+				</tbody>
+				</table>
+			</div>
+			<!-- //tbl_wrap -->
+			<!-- paging -->
+			<div class="paging_wrap">
+				<div class="area">
+					<p class="page_txt">전체 <%= pageForm.totCnt %>건</p>
+				</div>
+				<div class="area">
+					<ul class="paging right">
+					<li class="page_prev">
+						<button type="button" class="btn_page prev"><span class="ico_arrow prev"><</span></button>
+					</li>
+					<% for(var i = 1; i <= pageForm.pageCnt; i++) { %>
+					<li class="page_item <% if(i == 1){ %>on<%}%>">
+						<button type="button" class="btn_page page_cnt" value="<%= i %>"><%= i %></button>
+					</li>
+					<% } %>
+					<li class="page_next">
+						<button type="button" class="btn_page next"><span class="ico_arrow next">></span></button>
+					</li>
+					</ul>
+				</div>
+			</div>
+			<!-- //paging -->
+		</div>
+		<!-- //body -->
+	</div>
+	<!-- //section -->
+</div>
+<!-- //content -->
+<script>
+$(document).ready(function(){
+
+	$(document).on('click', '#listBox .pointer td', function() {
+		var $tr = $(this).parents('tr'),
+			bbsNo = $tr.find('input[name=bbsNo]').val(),
+			postNo = $tr.find('input[name=postNo]').val();
+
+		location.href="postView?bbsNo="+bbsNo+"&postNo="+postNo;
+	});
+
+	$('.list_search').on('click', function() {
+		var form = $('#searchForm');
+		form.find('input[name=cp]').val(1);
+		form.submit();
+	});
+
+	$('.page_cnt').on('click', function() {
+		var $this = $(this);
+		$('#searchForm input[name=cp]').val($this.val());
+		console.log($('#searchForm').serialize());
+		$.ajax({
+				url: '/postListCore',
+				type: 'GET',
+				data: $('#searchForm').serialize(),
+				success: function(result) {
+					var html = '';
+					console.log(result.length);
+					if(result.length > 0) {
+						$.each(result, function(i, item) {
+							html += '<tr class="pointer">';
+							html += '	<td>';
+							html +=	'		<div class="td_inr cent">';
+							html += ' 			'+item.POST_NO;
+							html +=	'			<input type="hidden" name="postNo" value="'+item.POST_NO+'">';
+							html +=	'			<input type="hidden" name="bbsNo" value="'+item.BBS_NO+'">';
+							html +=	'		</div>';
+							html +=	'	</td>';
+							html +=	'	<td><div class="td_inr">'+item.POST_TITLE+'<span class="col_blue">['+item.REPLY_CNT+']</span></div></td>';
+							html +=	'	<td><div class="td_inr cent">'+item.WRT_NM+'</div></td>';
+							html +=	'	<td><div class="td_inr cent">'+item.WRT_DTT+'</div></td>';
+							html +=	'	<td><div class="td_inr cent">'+item.VIEW_CNT+'</div></td>';
+							html +=	'	<td><div class="td_inr cent">'+item.LIKE_CNT+'</div></td>';
+							html +=	'</tr>';
+						});
+					} else {
+						html += '<tr>';
+						html += '	<td colspan="6"><div class="td_inr cent">등록된 게시글이 없습니다.</div></td>';
+						html += '</tr>';
+					}	
+
+					$('#listBox tbody').html(html);
+					$('.page_item').removeClass('on');
+					$this.closest('li').addClass('on');
+				}
+		});
+	});
+
+});
+</script>

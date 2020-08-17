@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="board">
+
+    <select id="selectPostList">
+        SELECT
+                P.BBS_NO
+              , P.POST_NO
+              , P.POST_TITLE
+              , IFNULL(R.REPLY_CNT, 0) REPLY_CNT
+              , L.NICKNAME    WRT_NM
+              , DATE_FORMAT(P.WRT_DTT, '%Y-%m-%d') WRT_DTT
+              , P.REPLY_YN
+              , P.VIEW_CNT
+              , IFNULL(O.LIKE_CNT, 0) LIKE_CNT
+              , COUNT(*) OVER() TOT_CNT
+        FROM	POST P
+		JOIN	UNI_LOGIN L
+		ON		P.WRT_ID = L.LOGIN_NO
+        LEFT	JOIN (
+                            SELECT
+                                    BBS_NO
+                                  , POST_NO
+                                  , COUNT(*) REPLY_CNT
+                            FROM	REPLY
+                            WHERE   1 = 1
+                            AND	    BBS_NO = #{bbsNo}
+                            GROUP	BY	BBS_NO
+                                      , POST_NO
+                        ) 	R
+        ON		P.BBS_NO = R.BBS_NO
+        AND	    P.POST_NO = R.POST_NO
+        LEFT	JOIN (
+                        SELECT
+                                BBS_NO
+                              , POST_NO
+                              , COUNT(*) LIKE_CNT
+                        FROM	OBJ_LIKE
+                        WHERE	1 = 1
+                        AND	    OBJ_CL_CD = '101100'	
+                        AND	    BBS_NO = #{bbsNo}
+                        GROUP	BY	BBS_NO
+                                  , POST_NO
+                    )	O
+        ON 	    P.BBS_NO = O.BBS_NO
+        AND	    P.POST_NO = O.POST_NO
+        WHERE	1 = 1
+        AND	    P.BBS_NO = #{bbsNo}
+        AND	    P.POST_TITLE LIKE CONCAT('%', #{qs}, '%')
+        ORDER	BY	POST_NO DESC
+    </select>
+
+    <select id="selectPost">
+        SELECT
+                P.BBS_NO
+              , P.POST_NO
+              , P.POST_TITLE
+              , PC.CONTENTS
+              , IFNULL(O.LIKE_CNT, 0) LIKE_CNT
+              , P.VIEW_CNT
+              , P.WRT_ID
+              , L.NICKNAME WRT_NM
+              , P.DISP_YN
+              , P.REPLY_YN
+              , DATE_FORMAT(P.WRT_DTT, '%Y-%m-%d') WRT_DTT
+        FROM	POST				P
+		JOIN 	UNI_LOGIN 	L
+		ON 		P.WRT_ID = L.LOGIN_NO
+        LEFT    JOIN  POST_CONTENTS 	PC
+        ON	    P.BBS_NO = PC.BBS_NO
+        AND	    P.POST_NO = PC.POST_NO
+        LEFT	JOIN (
+                        SELECT
+                                BBS_NO
+                              , POST_NO
+                              , COUNT(*) LIKE_CNT
+                        FROM	OBJ_LIKE
+                        WHERE	1 = 1
+                        AND	    OBJ_CL_CD = '101100'	
+                        AND	    BBS_NO = #{bbsNo}
+                        AND 	POST_NO = #{postNo}
+                        GROUP	BY	BBS_NO
+                                  , POST_NO
+                    )	O
+        ON 	    P.BBS_NO = O.BBS_NO
+        AND	    P.POST_NO = O.POST_NO
+        WHERE	1 = 1
+        AND	    P.POST_NO = #{postNo}
+        AND	    P.BBS_NO = #{bbsNo}
+    </select>
+
+    <update id="updateViewCnt">
+        UPDATE	POST	M
+        JOIN	POST	S
+        ON		M.POST_NO = S.POST_NO
+        AND		M.BBS_NO = S.BBS_NO
+        SET		M.VIEW_CNT = S.VIEW_CNT + 1
+        WHERE	M.POST_NO = #{postNo}
+        AND		M.BBS_NO = #{bbsNo}
+    </update>
+
+    <select id="selectPostNo">
+        SELECT
+                IFNULL(MAX(POST_NO) + 1, 1) POST_NO
+        FROM    POST
+        WHERE   BBS_NO = #{bbsNo}
+    </select>
+
+    <insert id="mergePost">
+        INSERT INTO POST 	(
+                                POST_NO
+                                , BBS_NO
+                                , POST_TITLE
+                                , WRT_ID
+                                , WRT_DTT
+								, TOP_POST_YN
+								, DISP_YN
+                                , VIEW_CNT
+                                , REPLY_YN
+                                , REG_NO
+                                , REG_DTT
+                                , MOD_NO
+                                , MOD_DTT
+                            )
+        VALUES 				(
+                                  #{postNo}
+                                , #{bbsNo}
+                                , #{postTitle}
+                                , #{wrtId}
+                                , NOW()
+								, 'N'
+								, #{dispYn}
+                                , 0
+                                , #{replyYn}
+                                , #{regNo}
+                                , NOW()
+                                , #{modNo}
+                                , NOW() 
+                            )
+        ON	DUPLICATE KEY 
+        UPDATE
+            POST_TITLE = #{postTitle}
+            , REPLY_YN = #{replyYn}
+            , DISP_YN = #{dispYn}
+            , MOD_NO = #{modNo}
+            , MOD_DTT = NOW()
+    </insert>
+
+    <insert id="mergePostContents">
+        INSERT INTO POST_CONTENTS (
+                                      BBS_NO
+                                    , POST_NO
+                                    , CONTENTS
+                                    )
+        VALUES 						(
+                                      #{bbsNo}
+                                    , #{postNo}
+                                    , #{contents}
+                                    )
+        ON	DUPLICATE KEY 
+        UPDATE
+                CONTENTS = #{contents}
+    </insert>
+
+    <delete id="deletePost">
+        DELETE 
+        FROM    POST
+        WHERE   1 = 1
+        AND     POST_NO = #{postNo}
+        AND     BBS_NO = #{bbsNo}
+    </delete>
+
+    <delete id="deletePostContents">
+        DELETE 
+        FROM    POST_CONTENTS
+        WHERE   1 = 1
+        AND     POST_NO = #{postNo}
+        AND     BBS_NO = #{bbsNo}
+    </delete>
+
+    <select id="selectPostLikeYn">
+        SELECT
+                CASE
+                    WHEN COUNT(*) > 0 
+                        THEN 'Y'
+                        ELSE 'N'
+                END LIKE_YN
+        FROM	OBJ_LIKE
+        WHERE	1 = 1
+        AND     LOGIN_NO = #{loginNo}
+        AND	    OBJ_CL_CD = '101100'
+        AND	    BBS_NO = #{bbsNo}
+        AND	    POST_NO = #{postNo}
+    </select>
+
+    <insert id="insertObjLike">
+        INSERT INTO OBJ_LIKE (
+                                LIKE_NO
+                            , LOGIN_NO
+                            , OBJ_CL_CD
+                            , BBS_NO
+                            , POST_NO
+                            )
+        SELECT
+              (SELECT IFNULL(MAX(LIKE_NO)+1, 1) FROM OBJ_LIKE)
+            , #{loginNo}
+            , '101100'
+            , #{bbsNo}
+            , #{postNo}
+    </insert>
+
+    <delete id="deleteObjLike">
+        DELETE
+        FROM    OBJ_LIKE
+        WHERE   1 = 1
+        AND     LOGIN_NO = #{loginNo}
+        AND     OBJ_CL_CD = '101100'
+        AND     BBS_NO = #{bbsNo}
+        AND     POST_NO = #{postNo}
+    </delete>
+
+    <select id="selectReplyNo">
+        SELECT
+                IFNULL(MAX(REPLY_NO) + 1, 1) REPLY_NO
+        FROM    REPLY
+        WHERE   BBS_NO = #{bbsNo}
+        AND     POST_NO = #{postNo}
+    </select>
+
+    <select id="selectReplyList">
+        SELECT 
+                R.REPLY_NO
+              , R.REPLY
+              , R.WRT_ID
+              , L.NICKNAME WRT_NM
+              , DATE_FORMAT(R.WRT_DTT, '%Y-%m-%d %T') WRT_DTT
+        FROM    REPLY   R
+              , UNI_LOGIN   L
+        WHERE   1 = 1
+        AND     R.BBS_NO = #{bbsNo}
+        AND     R.POST_NO = #{postNo}
+        AND     R.WRT_ID = L.LOGIN_NO
+        ORDER   BY REPLY_NO DESC
+    </select>
+
+    <insert id="insertReply">
+        INSERT INTO REPLY   (
+                                REPLY_NO
+                              , BBS_NO
+                              , POST_NO
+                              , REPLY
+                              , WRT_ID
+                              , WRT_DTT
+                              , REG_NO
+                              , REG_DTT
+                              , MOD_NO
+                              , MOD_DTT
+                            )
+        VALUES              (
+                                #{replyNo}
+                              , #{bbsNo}
+                              , #{postNo}
+                              , #{reply}
+                              , #{wrtId}
+                              , NOW()
+                              , #{regNo}
+                              , NOW()
+                              , #{modNo}
+                              , NOW()
+                            )
+    </insert>
+
+    <delete id="deleteReply">
+        DELETE
+        FROM    REPLY
+        WHERE   REPLY_NO = #{replyNo}
+        AND     BBS_NO = #{bbsNo}
+        AND     POST_NO = #{postNo}
+    </delete>
+
+</mapper>

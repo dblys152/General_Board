@@ -1,0 +1,224 @@
+<% layout('home') -%>
+<!-- content -->
+<div class="content">
+	<!-- section -->
+	<div class="section">
+		<!-- body -->
+		<div class="body">
+			<!-- tbl_wrap -->
+			<div class="tbl_wrap write">
+				<form id="boardForm" method="POST">
+					<input type="hidden" name="postNo" value="<%= form[0].POST_NO %>">
+					<input type="hidden" name="bbsNo" value="<%= form[0].BBS_NO %>">
+					<table>
+					<colgroup>
+						<col style="width:80px"><col style="width:200px"><col style="width:80px"><col style="width:200px">
+						<col style="width:50px"><col style="width:50px"><col style="width:50px"><col style="width:50px">
+					</colgroup>
+					<tbody>
+					<tr>
+						<th scope="row">제목</th>
+						<td class="bold" colspan="6"><%= form[0].POST_TITLE %></td>
+						<td class="grt big_grt cent pointer">
+							<% if(likeYn == 'Y'){ %>
+							<img src="img/likeOn.png" alt="추천on">
+							<% } else { %>
+							<img src="img/likeOff.png" alt="추천off">
+							<% } %>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">등록자</th>
+						<td><%= form[0].WRT_NM %></td>
+						<th scope="row">등록일</th>
+						<td><%= form[0].WRT_DTT %></td>
+						<th class="cent" scope="row">조회수</th>
+						<td class="cent"><%= form[0].VIEW_CNT %></td>
+						<th class="cent" scope="row">추천수</th>
+						<td class="grt_cnt cent"><%= form[0].LIKE_CNT %></td>
+					</tr>
+					<tr>
+						<td class="board_centent" colspan="8">
+							<%= form[0].CONTENTS %>
+						</td>
+					</tr>
+					</tbody>
+					</table>
+				</form>
+			</div>
+			<!-- //tbl_wrap -->
+			<% if(loginNo == form[0].WRT_ID){ %>
+			<div class="filed_box">
+				<div class="btn_wrap right">
+					<a href="postWrite?bbsNo=<%= form[0].BBS_NO %>&postNo=<%= form[0].POST_NO %>" type="button" class="btn_base gray post_modi"><span>수정</span></a>
+					<button type="button" class="btn_base red post_del"><span>삭제</span></button>
+				</div>
+			</div>
+			<% } %>
+		
+			<% if(form[0].REPLY_YN == 'Y'){ %>
+			<div class="article notice_board">
+				<p class="sub_tit">댓글</p>
+				<div class="comt_write">
+					<div class="user_info">
+						<span class="name"><%= nickname %></span>
+						<div class="edit_box on">
+							<input type="hidden" id="nickname" value="<%= nickname %>">
+							<input type="hidden" id="loginNo" value="<%= loginNo %>">
+							<button type="button" class="btn_base small btn_request"><span>등록</span></button>
+						</div>
+					</div>
+					<div class="comt_area">
+						<textarea cols="30" rows="5"></textarea>
+					</div>
+				</div>
+				<ul class="comt_list">
+				<% replyList.forEach(function(item, i){ %>
+				<li>
+					<div class="comt_box">
+						<div class="user_info">
+							<input type="hidden" name="replyNo" value="<%= item.REPLY_NO %>">
+							<input type="hidden" name="wrtId" value="<%= item.WRT_ID %>">
+							<span class="name"><%= item.WRT_NM %></span>
+							<span class="date"><%= item.WRT_DTT %></span>
+							<% if(loginNo == item.WRT_ID){ %>
+							<div class="edit_box on">
+								<button type="button" class="btn_base gray_rev small btn_remove"><span>삭제</span></button>
+							</div>
+							<% } %>
+						</div>
+						<div class="comt_desc">
+							<p class="txt"><%= item.REPLY %></p>
+						</div>
+					</div>
+				</li>
+				<% }) %>	
+				</ul>
+			</div>
+			<% } %>
+			<div class="btn_wrap cent">
+				<a href="postList?bbsNo=<%= form[0].BBS_NO %>" type="button" class="btn_base rev"><span>목록</span></a>
+			</div>
+		</div>
+		<!-- //body -->
+	</div>
+	<!-- //section -->
+</div>
+<!-- //content -->
+
+<script>
+$(document).ready(function(){
+
+	$('.board_centent').html($('.board_centent').text());
+	
+	$('.grt').on('click', function() { //게시글 좋아요
+		var $this = $(this);
+		var $form = $('#boardForm'),
+			bbsNo = $form.find('input[name=bbsNo]').val(),
+			postNo = $form.find('input[name=postNo]').val();
+
+		$.ajax({
+				url: 'postLike',
+				type: 'GET',
+				data: {"bbsNo":bbsNo,
+						"postNo":postNo},
+				success: function(result) {
+					var $cntTd = $this.closest('tbody').find('.grt_cnt');
+					if (result.cnt > 0) {
+						$cntTd.text(parseInt($cntTd.text()) + 1);
+						$('.grt img').attr('src', 'img/likeOn.png');
+					} else {
+						$cntTd.text(parseInt($cntTd.text()) - 1);
+						$('.grt img').attr('src', 'img/likeOff.png');
+					}
+				}
+		});
+
+	});
+	
+	// 댓글 등록
+	$('.btn_request').on('click', function() {
+		var $form = $('#boardForm'),
+			bbsNo = $form.find('input[name=bbsNo]').val(),
+			postNo = $form.find('input[name=postNo]').val();
+		var $comWrite = $('.comt_write');
+			reply =  $.trim($comWrite.find('textarea').val()),
+			nickname = $comWrite.find('#nickname').val(),
+			loginNo = $comWrite.find('#loginNo').val();
+
+		if(reply == '') {
+			alert('댓글을 입력하세요.');
+			return false;
+		}
+		
+		$.ajax({
+				url: 'replyAdd',
+				type: 'GET',
+				data: {"bbsNo":bbsNo,
+						"postNo":postNo,
+						"reply":reply,
+						"wrtId":loginNo},
+				success: function(result) {
+					if (result.ret > 0) {
+						var d = new Date();
+						var currentDate = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate() + " "
+											+ d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+						$('.comt_write textarea').val('');
+						var replyNo = result.replyNo;
+						var html = '';
+						html += '<li>';
+						html += '	<div class="comt_box">';
+						html += '		<div class="user_info">';
+						html += '			<input type="hidden" name="replyNo" value="'+replyNo+'">';
+						html += '			<input type="hidden" name="wrtId" value="'+loginNo+'">';
+						html += '			<span class="name">'+nickname+'</span>';
+						html += '			<span class="date">'+currentDate+'</span>';
+						html += '			<div class="edit_box on">';
+						html += '				<button type="button" class="btn_base gray_rev small btn_remove"><span>삭제</span></button>';
+						html += '			</div>';
+						html += '		</div>';
+						html += '		<div class="comt_desc">';
+						html += '			<p class="txt">'+reply+'</p>';
+						html += '		</div>';
+						html += '	</div>';
+						html += '</li>';
+						$('.comt_list').prepend(html);
+					} 
+				}
+		});
+	});
+
+	// 댓글 삭제
+	$(document).on('click', '.btn_remove', function() {
+		if(confirm("댓글을 삭제하시겠습니까?")) {
+			var $li = $(this).parents('li'),
+				replyNo = $li.find('input[name=replyNo]').val();
+			var $form = $('#boardForm'),
+				bbsNo = $form.find('input[name=bbsNo]').val(),
+				postNo = $form.find('input[name=postNo]').val();
+			$.ajax({
+					url: 'replyDel',
+					type: 'GET',
+					data: {"bbsNo":bbsNo,
+							"postNo":postNo,
+							"replyNo":replyNo},
+					success: function(result) {
+						if (result.ret > 0) {
+							$li.remove();
+						} 
+					}
+			});
+		}
+	});
+
+	$('.post_del').on('click', function() {
+		if(confirm('게시글을 삭제하시겠습니까?')) {
+			var $form = $('#boardForm'),
+				bbsNo = $form.find('input[name=bbsNo]').val(),
+				postNo = $form.find('input[name=postNo]').val();
+			location.href="postDel?bbsNo="+bbsNo+'&postNo='+postNo;
+		}
+	});
+
+});
+</script>

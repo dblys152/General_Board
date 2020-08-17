@@ -1,0 +1,25 @@
+<% layout('home') -%>
+<div class="content">
+	<!-- section -->
+	<div class="section">
+		<!-- body -->
+		<div class="body">
+			<div class="field_box cent">
+				권한이 없습니다.
+			</div>
+			<div class="field_box cent">
+				<button type="button" class="btn_base rev btn_history_back"><span>돌아가기</span></button>
+			</div>
+		</div>
+		<!-- //body -->
+	</div>
+	<!-- //section -->
+</div>
+<!-- //content -->
+<script>
+$(document).ready(function(){
+	$('.btn_history_back').on('click', function() {
+		history.back(-1);
+	});
+});
+</script>

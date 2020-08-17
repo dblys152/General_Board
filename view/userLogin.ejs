@@ -1,0 +1,56 @@
+<% layout('home') -%>
+<!-- content -->
+<div id="login">
+	<div class="login_box">
+		<form id="loginForm">
+			<div class="cont left">
+				<div class="title">로그인</div>
+				<p><input style="border: 1px solid; padding-bottom:10px;" type="text" name="email" placeholder="Email"></p>
+				<p><input style="border: 1px solid; padding-bottom:10px;" type="password" name="pw" placeholder="Password"></p>
+				<button class="btn_login" type="button">Login</button>
+				<button class="btn_signin" type="button" onclick="location.href='/users/userSignin'">Sign in</input>
+			</div>
+		</form>
+	</div>
+</div>
+<!-- //content -->
+
+<script>
+$(document).ready(function(){
+
+	$('input').on('keydown', function(e) {
+		if (e.keyCode==13) {return false;}
+	});
+
+	$('.btn_login').on('click', function() {
+		var $form = $('#loginForm'),
+			email = $form.find('input[name=email]').val(),
+			pw = $form.find('input[name=pw]').val();
+		if(email == null || $.trim(email) == '') {
+			alert('이메일을 입력하세요');
+			$form.find('input[name=email]').focus();
+			return false;
+		} else if(pw == null || $.trim(pw) == '') {
+			alert('비밀번호를 입력하세요');
+			$form.find('input[name=pw]').focus();
+			return false;
+		} else {
+			$.ajax({
+					url: '/users/login',
+					type: 'POST',
+					data: {"email":email,
+							"pw":pw},
+					success: function(result) {
+						if (result.ret > 0) {
+							alert('로그인 되었습니다.');
+							location.href="/postList";
+						} else {
+							alert('로그인 실패하였습니다. 정보를 확인해주세요.');
+						}
+					}
+			});
+		}
+	});
+
+});
+</script>

@@ -1,0 +1,134 @@
+<% layout('home') -%>
+<!-- content -->
+<div class="content">
+	<!-- section -->
+	<div class="section">
+		<!-- body -->
+		<div class="body">
+			<form id="boardForm" action="postSave" method="POST">
+				<input type="hidden" name="bbsNo" value="<%= bbsNo %>" >
+				<input type="hidden" name="postNo" value="<%= form[0].POST_NO %>" >
+				<input type="hidden" name="wrtId" value="<%= form[0].WRT_ID %>" >
+				<!-- tbl_wrap -->
+				<div class="tbl_wrap write">
+					<table>
+						<colgroup>
+							<col style="width:100px"><col style="width:100px"><col style="width:100px"><col style="width:500px">
+						</colgroup>
+					<tbody>
+					<tr>
+						<th scope="row">제목<span class="col_red">*</span></th>
+						<td colspan="5"><input type="text" name="postTitle" value="<%= form[0].POST_TITLE %>" placeholder="제목을 입력하세요." style="width:100%"/></td>
+					</tr>
+					<tr>
+						<th scope="row">
+							상세내용<span class="col_red">*</span>
+						</th>
+						<td colspan="5">
+							<textarea name="contents" class="edit_contents"><%= form[0].CONTENTS %></textarea>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">공개 여부</th>
+						<td>
+							<input type="radio" name="dispYn" value="Y" <% if(form[0].DISP_YN == 'Y'){ %>checked<%}%> >ON
+							<input type="radio" name="dispYn" value="N" <% if(form[0].DISP_YN == 'N'){ %>checked<%}%> >OFF
+						</td>
+						<th scope="row">댓글 가능 여부</th>
+						<td>
+							<input type="radio" name="replyYn" value="Y" <% if(form[0].REPLY_YN == 'Y'){ %>checked<%}%> >ON
+							<input type="radio" name="replyYn" value="N" <% if(form[0].REPLY_YN == 'N'){ %>checked<%}%> >OFF
+						</td>
+					</tr>
+					</tbody>
+					</table>
+				</div>
+				<div class="btn_wrap cent">
+					<button type="button" class="btn_base post_save"><span>저장</span></button>
+					<button type="button" class="btn_base rev btn_history_back"><span>취소</span></button>
+				</div>
+			</form>
+		</div>
+		<!-- //body -->
+	</div>
+	<!-- //section -->
+</div>
+<!-- //content -->
+
+<script type="text/javascript" src="tinymce/tinymce.min.js"></script>
+<script>
+$(document).ready(function(){
+
+	$('.btn_history_back').on('click', function() {
+		history.back(-1);
+	});
+
+	$('input[name=postTitle]').on('keydown', function(e) {
+		if (e.keyCode==13) {return false;}
+	});
+
+	$('.post_save').on('click', function() {
+		var $form = $('#boardForm'),
+			postTitle = $form.find('input[name=postTitle]').val(),
+			contents = tinyMCE.activeEditor.getContent();
+		if(postTitle == null || $.trim(postTitle) == '') {
+			alert('제목을 입력하세요');
+			$form.find('input[name=postTitle]').focus();
+			return false;
+		}else if(contents == null || contents == '') {
+			alert('상세내용을 입력하세요');
+			tinyMCE.activeEditor.focus();
+			return false;
+		} else {
+			if(confirm('저장하시겠습니까?')) {
+				$form.submit();
+			}
+		}
+	});
+	
+	tinymce.init({
+        selector: ".edit_contents",
+        theme: "modern",
+        language_url: 'tinymce/langs/ko_KR.js',
+        menubar:false,
+        height: 600,
+        plugins: "autolink autosave code link media image table textcolor autoresize",
+        toolbar: "undo redo | styleselect | forecolor bold underline italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link media custom_image image code",
+        automatic_uploads: true,
+        file_picker_types: 'image',
+        /* and here's our custom image picker*/
+        //images_upload_url: '/resources/images/post',
+        //images_upload_base_path: '/resources/images/post',
+		file_picker_callback: function(cb, value, meta) {
+			var input = document.createElement('input');
+			input.setAttribute('type', 'file');
+			input.setAttribute('accept', 'image/*');
+			input.onchange = function() {
+				var file = this.files[0];
+				var reader = new FileReader();
+
+				reader.onload = function () {
+					var id = 'blobid' + (new Date()).getTime();
+					var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
+					var base64 = reader.result.split(',')[1];
+					var blobInfo = blobCache.create(id, file, base64);
+					blobCache.add(blobInfo);
+
+					cb(blobInfo.blobUri(), { title: file.name });
+				};
+				reader.readAsDataURL(file);
+			};
+			input.click();
+		},
+		images_upload_url: '/file/uploadImg',
+		images_reuse_filename: true,
+		language: 'ko_KR',
+		setup: function (editor) {
+			geditor = editor;
+			editor.on('change', function (e) {
+				editor.save();
+			});
+		}
+    });
+});
+</script>

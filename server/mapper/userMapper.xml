@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="user">
+
+    <select id="selectEmailCnt">
+        SELECT  
+                COUNT(*) CNT
+        FROM    UNI_LOGIN 
+        WHERE   1 = 1
+        AND     EMAIL = #{email}
+        AND     DEL_YN = 'N'
+    </select>
+
+    <insert id="insertLogin">
+        INSERT INTO UNI_LOGIN 	(
+								  LOGIN_NO
+								, EMAIL
+								, PW
+								, NICKNAME
+								)
+        SELECT
+				CONCAT('LN', RIGHT((SELECT IFNULL(SUBSTRING(MAX(LOGIN_NO), 3)+1, 1) FROM LOGIN) + 100000, 5))
+			  , #{email}
+			  , #{pw}
+			  , #{nickname}
+    </insert>
+
+    <select id="selectLogin">
+        SELECT 
+                EMAIL
+              , PW
+              , LOGIN_NO
+              , NICKNAME
+              , AUTH_LV
+        FROM    UNI_LOGIN
+        WHERE   1 = 1
+        AND     EMAIL = #{email}
+        AND     PW = #{pw}
+        AND     DEL_YN = 'N'
+    </select>
+
+</mapper>
